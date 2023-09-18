@@ -1,0 +1,49 @@
+import six  # Import the 'six' module (for compatibility)
+import sys
+
+# Add 'six' module to sys.modules
+sys.modules['sklearn.externals.six'] = six
+
+import mlrose  # Import the mlrose library for optimization
+import numpy as np  # Import the NumPy library for numerical operations
+
+# Define a fitness function for the N-Queens problem
+def queens_max(position):
+    not_attacking_on_j = 0
+    queen_not_attacking = 0
+
+    # Loop through each queen's position
+    for i in range(len(position)):
+        not_attacking_on_j = 0
+
+        # Check for conflicts with other queens
+        for j in range(i, len(position)):
+            if (position[j] != position[i] and
+                position[j] != position[i] + (j - i) and
+                position[j] != position[i] - (j - i)):
+                not_attacking_on_j += 1
+
+        # If no conflicts with other queens, increment queen_not_attacking
+        if not_attacking_on_j == len(position) - i - 1:
+            queen_not_attacking += 1
+
+    return queen_not_attacking  # Return the count of non-attacking queens
+
+# Create a fitness function using the queens_max function
+fitness = mlrose.CustomFitness(queens_max)
+
+# Define the optimization problem (8-Queens problem)
+problem = mlrose.DiscreteOpt(length=8, fitness_fn=fitness, maximize=True, max_val=8)
+
+# Define the initial state (queen positions)
+init_state = np.array([2, 1, 3, 0, 4, 6, 7, 5])
+
+# Define the temperature schedule for simulated annealing
+schedule = mlrose.ExpDecay()
+
+# Run simulated annealing to find the best state and fitness
+best_state, best_fitness = mlrose.simulated_annealing(problem, schedule=schedule, max_attempts=500, max_iters=5000, init_state=init_state)
+
+# Print the best state and fitness found
+print("Best State:", best_state)
+print("Best Fitness:", best_fitness)
