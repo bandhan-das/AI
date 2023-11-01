@@ -1,0 +1,101 @@
+def DPLL_SATISFIABLE(s):
+    clauses, symbols = CONVERT_TO_CNF(s)
+    return DPLL(clauses, symbols, {})
+
+def DPLL(clauses, symbols, model):
+    if all_clauses_true(clauses, model):
+        return True
+    if some_clauses_false(clauses, model):
+        return False
+    p, value = find_pure_symbol(symbols, clauses, model)
+    if p is not None:
+        new_symbols = [symb for symb in symbols if symb != p]
+        new_model = model.copy()
+        new_model[p] = value
+        return DPLL(clauses, new_symbols, new_model)
+    p, value = find_unit_clause(clauses, model)
+    if p is not None:
+        new_symbols = [symb for symb in symbols if symb != p]
+        new_model = model.copy()
+        new_model[p] = value
+        return DPLL(clauses, new_symbols, new_model)
+    p = symbols[0]
+    rest = symbols[1:]
+    return DPLL(clauses, rest, {**model, p: True}) or DPLL(clauses, rest, {**model, p: False})
+
+def all_clauses_true(clauses, model):
+    return all(evaluate_clause(clause, model) for clause in clauses)
+
+def some_clauses_false(clauses, model):
+    return any(not evaluate_clause(clause, model) for clause in clauses)
+
+def evaluate_clause(clause, model):
+    for literal in clause:
+        if literal[0] == '-':
+            if literal[1:] not in model:
+                return False
+            elif model[literal[1:]] is False:
+                return True
+        else:
+            if literal not in model:
+                return False
+            elif model[literal] is True:
+                return True
+    return False
+
+def find_pure_symbol(symbols, clauses, model):
+    pure_symbols = set()
+    for symbol in symbols:
+        pure = True
+        for clause in clauses:
+            if symbol in clause and evaluate_clause(clause, model):
+                pure = False
+                break
+        if pure:
+            pure_symbols.add(symbol)
+    if pure_symbols:
+        symbol = pure_symbols.pop()
+        return symbol, True
+    else:
+        return None, None
+
+def find_unit_clause(clauses, model):
+    for clause in clauses:
+        unassigned = None
+        for literal in clause:
+            if literal[0] == '-':
+                if literal[1:] not in model:
+                    if unassigned is not None:
+                        unassigned = None
+                        break
+                    unassigned = literal[1:]
+                elif model.get(literal[1:], False) is False:
+                    continue
+                else:
+                    unassigned = None
+                    break
+            else:
+                if literal not in model:
+                    if unassigned is not None:
+                        unassigned = None
+                        break
+                    unassigned = literal
+                elif model.get(literal, True) is True:
+                    continue
+                else:
+                    unassigned = None
+                    break
+        if unassigned is not None:
+            return unassigned, True
+    return None, None
+
+def CONVERT_TO_CNF(s):
+    clauses = [clause.strip() for clause in s.split("AND")]
+    symbols = set()
+    for clause in clauses:
+        symbols.update([symbol.strip() for symbol in clause.split("OR")])
+    return [clause.split("OR") for clause in clauses], list(symbols)
+
+s = "(A OR B) AND (NOT A OR C) AND (B OR C)"
+result = DPLL_SATISFIABLE(s)
+print("Is the sentence satisfiable?", result)
