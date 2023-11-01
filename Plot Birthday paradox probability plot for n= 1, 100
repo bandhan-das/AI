@@ -1,0 +1,15 @@
+import matplotlib.pyplot as plot
+def birthday_paradox_probability(n):
+  probability_no_one_shared_birthday=1.0
+  for i in range(n):
+    probability_no_one_shared_birthday*=(365-i)/365
+  probability_shared_birthday=1-probability_no_one_shared_birthday
+  return probability_shared_birthday
+values=list(range(1,101))
+probabilites=[birthday_paradox_probability(n) for n in values]
+plot.plot(values,probabilities)
+plot.xlabel("Number of People(n)")
+plot.ylabel("Probability of Shared Birthday")
+plot.title("Birthday Paradox Probability Plot")
+plot.grid(True)
+plot.show()
